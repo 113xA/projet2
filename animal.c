@@ -88,3 +88,5 @@ void animalSetEnergy(Animal *animal, int energy)
 {
     animal->energy = energy;
 }
+
+//test
