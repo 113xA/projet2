@@ -12,6 +12,13 @@
  */
 typedef struct Grid_t Grid;
 
+
+/**
+ * @brief Opaque declaration of a cell.
+ *
+ */
+typedef struct Cell_t Cell;
+
 /**
  * @brief Create an empty grid.
  *
