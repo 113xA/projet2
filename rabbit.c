@@ -9,7 +9,32 @@
 
 #include "rabbit.h"
 
+Action rabbitFindAction(Animal *rabbit, Grid *grid, Position position)
+{
+    
+
+}
+
+Animal *reproduceRabbit(Animal *rabbit)
+{
+    int rabbitEnergy = animalGetEnergy(rabbit);
+
+    if(rabbitEnergy >= rabbitReproduceThreshold)
+    {
+        Animal *newRabbit;
+        newRabbit = rabbitCreate();
+        animalLoseEnergy(rabbit);
+        return newRabbit;
+    }
+
+    else
+        return NULL;
+}
+
 Animal *rabbitCreate(void)
 {
-    return NULL;
+    Animal *NewRabbit = animalCreate(rabbitName, rabbitPriority, rabbitInitEnergy, rabbitActionEnergy, rabbitEatEnergy, 
+                                    rabbitFindAction, reproduceRabbit);
+
+    return NewRabbit;
 }
