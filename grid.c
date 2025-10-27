@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "position.h"
 #include "animal.h"
@@ -35,29 +36,36 @@ int gridGetHeight(Grid *grid)
 Grid *gridCreateEmpty(int height, int width)
 {
     Grid *grid = malloc(sizeof(Grid));
-    if (!grid) return NULL;
+    if (!grid){
+        printf("Could not allocate grid.\n");
+        grid->width = 0;
+        grid->height = 0;
+        return grid;
+    } 
 
     grid->width = width;
     grid->height = height;
 
 
-    grid->matrix = malloc(sizeof(Cell *) * height); // allocate rows (pointers)
-    if (!grid->matrix) {
-        free(grid);
-        return NULL;
-    }
+    grid->matrix = malloc(sizeof *grid->matrix * height); // allocate rows (pointers)
+    if (!grid->matrix){
+        printf("Could not allocate grid.\n");
+        grid->width = 0;
+        grid->height = 0;
+        return grid;
+    } 
     
     for (int i = 0; i < height; i++)
     {
 
         grid->matrix[i] = malloc(width * sizeof(Cell)); // allocate columns (cells)
 
-        if (!grid->matrix[i]) {
-            for (int k = 0; k < i; k++) free(grid->matrix[k]);
-            free(grid->matrix);
-            free(grid);
-            return NULL;
-        }
+        if (!grid->matrix[i]){
+            printf("Could not allocate grid.\n");
+            grid->width = 0;
+            grid->height = 0;
+            return grid;
+        }   
 
         for (int j = 0; j < width; j++) 
         {
@@ -181,20 +189,20 @@ void gridMakeEmpty(Grid *grid, Position pos)
         grid->matrix[pos.row][pos.col].is_animal = false;
         grid->matrix[pos.row][pos.col].is_grass = false;
         grid->matrix[pos.row][pos.col].is_empty = true;
-        return
+        return;
     }
 
     if (gridCellIsGrass(grid, pos)) {
         grid->matrix[pos.row][pos.col].is_grass = false;
         grid->matrix[pos.row][pos.col].is_animal = false;
         grid->matrix[pos.row][pos.col].is_empty = true;
-        return
+        return;
     }
 }
 
 bool gridCellIsOutside(Grid *grid, Position pos)
 {
-    if (pos.row >= 0 || pos.row < grid->height || pos.col >= 0 || pos.col < grid->width) {
+    if (pos.row >= 0 || pos.row < gridGetHeight(grid) || pos.col >= 0 || pos.col < gridGetWidth(grid)) {
         return false;
     }
     return true;
@@ -204,7 +212,7 @@ bool gridCellIsEmpty(Grid *grid, Position pos)
 {
     if (gridCellIsOutside(grid, pos)) {
         printf("Position (%d, %d) is outside the grid, cannot check if empty.\n", pos.col, pos.row);
-        return NULL;
+        return false;
     }
 
     if (grid->matrix[pos.row][pos.col].is_empty == false) {
@@ -220,7 +228,7 @@ bool gridCellIsGrass(Grid *grid, Position pos)
 {
     if (gridCellIsOutside(grid, pos)) {
         printf("Position (%d, %d) is outside the grid, cannot check if grass.\n", pos.col, pos.row);
-        return NULL;
+        return false;
     }
 
     if (grid->matrix[pos.row][pos.col].is_grass == true) {
@@ -236,7 +244,7 @@ bool gridCellIsAnimal(Grid *grid, Position pos)
 {
     if (gridCellIsOutside(grid, pos)) {
         printf("Position (%d, %d) is outside the grid, cannot check if animal.\n", pos.col, pos.row);
-        return NULL;
+        return false;
     }
 
     if (grid->matrix[pos.row][pos.col].is_animal == true) {
