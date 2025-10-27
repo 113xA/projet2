@@ -273,9 +273,39 @@ Animal *gridGetAnimal(Grid *grid, Position pos)
     }
 }
 
-int gridFindClosestAnimal(Grid *grid, Position pos, int maxDistance, const char *name)  //in priority
+int gridFindClosestAnimal(Grid *grid, Position pos, int maxDistance, const char *name)
 {
-    return maxDistance + 1;
+    int distance = 0;
+    Position current_pos;
+
+    while (distance <= maxDistance) {
+        for (int i = -distance; i <= distance; i++) {
+            for (int j = -distance; j <= distance; j++) {
+
+                // check if current position is in Manhattan distance
+                if (abs(i) + abs(j) > distance) {
+                    current_pos.row = pos.row + i;
+                    current_pos.col = pos.col + j;
+
+                    if (!gridCellIsOutside(grid, current_pos) && gridCellIsAnimal(grid, current_pos)) {
+                        Animal *animal = gridGetAnimal(grid, current_pos);
+
+                        if (strcmp(animalGetName(animal), name) == 0) {
+                            return distance;
+                        }
+                    }
+
+                }
+            }
+        }
+        distance++;
+    }
+
+    if (distance > maxDistance) {
+        return maxDistance + 1;
+    }
+
+    return distance;
 }
 
 int gridFindClosestGrass(Grid *grid, Position pos, int maxDistance)
