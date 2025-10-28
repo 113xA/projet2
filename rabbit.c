@@ -19,44 +19,49 @@ struct Cell_Val_t
 Action rabbitFindAction(Animal *rabbit, Grid *grid, Position position)
 {
     Action action;
-    int k = 0;
     int scoreMax = INT_MIN;
     int row = position.row;
     int col = position.col;
+    int k = 0;
 
-    Position midCell = position;      //initialisation des différentes positions possibles
-    Position leftCell = position;
-    Position upperCell = position;
-    Position underCell = position;
-    Position rightCell = position;
+    Position tabPos[5];
+    int i = 0;
 
-    leftCell.col = col - 1;
-    upperCell.row = row + 1;
-    underCell.row = row - 1;
-    rightCell.col = col + 1;
+    for(int currentRow = -1; currentRow <= 1; currentRow++)
+    {
+        for(int currentCol = -1; currentCol <= 1; currentCol++)
+        {
+            if(abs(currentRow) + abs(currentCol) <= 1)
+            {
+                tabPos[i].row = row + currentRow;
+                tabPos[i].col = col + currentCol;
+                i++;
+            }
+        }
+    }
 
-
-    Position tabPos[] = {midCell, leftCell, upperCell, underCell, rightCell};
     Cell_Val cell[5];
     Cell_Val chosenCells[5];
     Cell_Val finalCell;
+    int nbCells = 0;
 
-    int nbCells = sizeof(cell) / sizeof(cell[0]);
-
-    for (int i = 0, k = 0; i < 5; i++)  //vérification de la légitimié des cases
+    for (int i = 0; i < 5; i++)  //vérification de la légitimié des cases
     {
         if(gridCellIsOutside(grid, tabPos[i]) == true)
         {
             continue;
         }
 
-        cell[k].position = tabPos[i];
-        k++;
+        cell[nbCells].position = tabPos[i];
+        nbCells++;
     }
 
     for (int i = 0; i < nbCells; i++)        //attribution des scores
     {
-        if(gridCellIsAnimal(grid, cell[i].position) == true)
+        int currentRow = cell[i].position.row;
+        int currentCol = cell[i].position.col;
+
+        if(gridCellIsAnimal(grid, cell[i].position) == true && currentCol != col && currentRow != row)
         {
             cell[i].value = INT_MIN;
             continue;
@@ -79,6 +84,16 @@ Action rabbitFindAction(Animal *rabbit, Grid *grid, Position position)
             chosenCells[k].value = currentScore;
             chosenCells[k].position = currentPosition;
             scoreMax = currentScore;
+
+            if(k)
+            {
+                for(int j = 0; j <= k; j++)
+                {
+                    chosenCells[j].value = currentScore;
+                    chosenCells[j].position = currentPosition;
+                }
+            }
+            continue;
         }
         
         else if(currentScore == scoreMax)
