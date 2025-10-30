@@ -14,6 +14,12 @@
 #include "wolf.c"
 #include "rabbit.c"
 
+
+
+// loop pour compter herbe ?
+
+
+
 struct Simulation_t
 {
     Grid *grid;
@@ -104,47 +110,127 @@ int simulationCountGrass(Simulation *sim)
 
 void simulationStep(Simulation *sim)
 {
-    int max_priority;
-    int animal_count = sim->animal_count;
-    char first, second;
 
-    if (rabbitPriority > wolfPriority) {
-        max_priority = rabbitPriority;
-        char first = rabbitName;
-        char second = wolfName;
-    }
+    int grid_width = gridGetWidth(sim->grid);
+    int grid_height = gridGetHeight(sim->grid);
 
-    else if (rabbitPriority > wolfPriority){
-        max_priority = wolfPriority;
-        char first = wolfName;
-        char second = rabbitName;
-    }
+    int max_priority = 0;
 
-
-    for (int p = 0; p <= max_priority; p++) {       // go trough all priorities
-        
-        if (!strcmp(first,wolfName)){
-            wolf
-            rabbit
+    // make a table to know which animals have already played this turn
+    bool **played = malloc(sizeof(bool *) * grid_height);
+        for (int i = 0; i < grid_height; i++) {
+            played[i] = malloc(sizeof(bool) * grid_width);
+            for (int j = 0; j < grid_width; j++) {
+                played[i][j] = false;
+            }
         }
 
-        if (!strcmp(first,rabbitName)){
-            rabbit
-            wolf
+    // find max priority
+    for (int row = 0; row < grid_height; row++) {
+        for (int col = 0; col < grid_width; col++) {
+            Position pos;
+            pos.row = row;
+            pos.col = col;
+
+            if (gridCellIsAnimal(sim->grid, pos)) {
+                Animal *animal = gridGetAnimal(sim->grid, pos);
+                int priority = animalGetPriority(animal);
+                if (priority > max_priority) {
+                    max_priority = priority;
+                }
+            }
         }
+    }
 
+    for (int p = 0; p <= max_priority; p++) {     // go trough all priorities
 
+        for (int row = 0; row < grid_height; row++) {
+            for (int col = 0; col < grid_width; col++) {
+                
+                Position pos;
 
+                pos.row = row;
+                pos.col = col;
 
+                if (gridCellIsAnimal(sim->grid, pos)) {
+                    Animal *animal = gridGetAnimal(sim->grid, pos);
+                        if (animalGetPriority(animal) == p && !played[row][col]) {
 
+                            if (animalGetEnergy(animal) <= 0) {
+                                gridMakeEmpty(sim->grid, pos);
+                                break;
+                            }
 
+                            played[row][col] = true;
 
+                            Action action = animalFindAction(animal, sim->grid, pos);
 
+                            // lose energy for the turn
+                            animalLoseEnergy(animal);
 
+                            // move the animal
+                            Position new_pos = {pos.row + action.move.drow, pos.col + action.move.dcol};
+                            gridMoveAnimal(sim->grid, pos, new_pos);
+                            gridMakeEmpty(sim->grid, pos); 
+
+                            // eat if possible
+                            if (action.eat) {
+                                animalEat(animal);
+                                gridMakeEmpty(sim->grid, new_pos);
+                                if (gridCellIsGrass(sim->grid, new_pos)) {
+                                    sim->grass_count -= 1;
+                                }
+                                if (animalIsRabbit(animal)) {
+                                    sim->rabbit_count -= 1;
+                                }
+                            }
+
+                            // reproduce if possible
+                            Animal *baby_animal = animalCreateBaby(animal);
+                            if (!animalReproduce(animal)==NULL) {;
+                                simulationAddAnimal(sim, baby_animal, pos);
+                                played[pos.row][pos.col] = true;    // baby has played this turn
+                                animalLoseEnergy(animal);
+
+                            }
+
+                        }
+                }
+
+                if (gridCellIsGrass(sim->grid, pos)) {
+                    int adjacent_grass = 0;
+
+                    // check adjacent cells
+                    for (int drow = -1; drow <= 1; drow++) {
+                        for (int dcol = -1; dcol <= 1; dcol++) {
+                            if (abs(drow) + abs(dcol) == 1) { // only orthogonal neighbors
+                                Position neighbor_pos;
+                                neighbor_pos.row = pos.row + drow;
+                                neighbor_pos.col = pos.col + dcol;
+                                if (gridCellIsGrass(sim->grid, neighbor_pos)) {
+                                    adjacent_grass++;
+                                }
+                            }
+                        }
+                    }
+
+                    double probability = grassProb + adjacent_grass * grassIncProb;
+                    if ((double)rand() / RAND_MAX < probability) {
+                        simulationAddGrass(sim, pos);
+                    }
+                }
+
+            }
+
+        }
 
     }
 
-    
+    for (int row = 0; row < grid_height; row++) {
+        free(played[row]);
+    }
+    free(played);
+
     return;
 }
 
